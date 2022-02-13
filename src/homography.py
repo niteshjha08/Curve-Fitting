@@ -45,9 +45,10 @@ def main():
     A_pred = np.dot(np.dot(U, S), V.T)
 
     H=V.T[:,-1].reshape((3,3))
+    print("Homography matrix is:")
+    print(H)
 
 
-import math
-math.atan2(15/28)
+
 if __name__=="__main__":
     main()

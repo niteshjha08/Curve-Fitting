@@ -5,7 +5,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from p2 import standard_least_squares,get_best_fit_line
+from ball_trajectory_fitting import standard_least_squares,get_best_fit_line
 from math import log
 import random
 
