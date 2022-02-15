@@ -26,11 +26,11 @@ def get_best_fit_line(x_array,parameters,degree):
     return points
 
 def main():
-    smooth_trajectory_path='/home/nitesh/programming/ENPM673/HW1/videos/ball_video1.mp4'
-    noise_trajectory_path='/home/nitesh/programming/ENPM673/HW1/videos/ball_video2.mp4'
-
+    smooth_trajectory_path='./ball_video1.mp4'
+    noise_trajectory_path='./ball_video2.mp4'
+        
     # Replace path for desired video result
-    cap=cv2.VideoCapture(noise_trajectory_path)
+    cap=cv2.VideoCapture(smooth_trajectory_path)
 
     cv2.namedWindow('img',cv2.WINDOW_FREERATIO)
     cv2.namedWindow('red_mask',cv2.WINDOW_FREERATIO)
@@ -59,8 +59,8 @@ def main():
             x_array.append([ball_center**2,ball_center,1])
             y_array.extend([ball_y_max,ball_y_min])
 
-            cv2.circle(img,(ball_center,ball_y_max),5,(255,0,0),-1)
-            cv2.circle(img,(ball_center,ball_y_min),5,(255,255,0),-1)
+            cv2.circle(img,(ball_center,ball_y_max),20,(255,0,0),-1)
+            cv2.circle(img,(ball_center,ball_y_min),20,(255,255,0),-1)
 
             cv2.circle(points_img,(ball_center,ball_y_max),10,(255,0,0),-1)
             cv2.circle(points_img,(ball_center,ball_y_min),10,(255,255,0),-1)
@@ -73,12 +73,10 @@ def main():
             break
             # pass
     x_array=np.array(x_array)
-    y_array=np.array(y_array)
+    y_array=np.array(y_array) 
 
     res=standard_least_squares(x_array,y_array)
-    print(x_array[:,1].shape)
-    print(y_array.shape)
-    # print("res123:",res)
+    
     points=get_best_fit_line(x_array[:,1],res,degree=2)
     points_img=cv2.polylines(points_img,[points],False,(0,255,0),10)
     cv2.imshow('points_img',points_img)

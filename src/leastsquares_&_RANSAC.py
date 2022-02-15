@@ -16,43 +16,18 @@ def fit_linear_least_squares(age,charges):
     # print(age_augmented.shape)
 
     res=standard_least_squares(age_augmented,charges)
-    print("LLS params:",res)
+    # print("LLS params:",res)
     # points=res[0]*age_augmented[:,0]+res[0]*age_augmented[:,1]
     points=get_best_fit_line(age,res,degree=1)
 
     # return age,points
     return points
 
-# def fit_total_least_squares(x_array,y_array):
-
-#     x_mean=np.mean(x_array)
-#     y_mean=np.mean(y_array)
-#     U=np.vstack((x_array-x_mean,y_array-y_mean)).T
-#     C = np.dot(U.T,U)
-#     # C=np.cov(x_array,y_array)
-
-#     # Soln to TLS: U.T*U*N=0, N!=0
-#     # To solve homogenous eq:
-#     M=np.dot(C.T,C)
-#     N=np.dot(M.T,M)
-#     print("N shape",N.shape)
-#     eigvals, eigvecs = np.linalg.eig(N)
-#     print("eigvals shape:",eigvals.shape)
-#     soln_idx=np.argmin(eigvals)
-#     soln_vec=eigvecs[:,soln_idx]
-#     print("parameters shape:",soln_vec.shape)
-#     print("TLS result:",soln_vec)
-#     y_pred=soln_vec[0]*x_array + soln_vec[1]
-#     # y_pred=400*np.array([0,50,100]) + soln_vec[1]
-
-#     points=np.vstack((x_array,y_pred)).T
-#     print(points.shape)
-
-#     return points
 
 def fit_total_least_squares(x_array,y_array):
     x_mean=np.mean(x_array)
     y_mean=np.mean(y_array)
+    
 
     U=np.vstack((x_array-x_mean,y_array-y_mean)).T
 
@@ -64,26 +39,21 @@ def fit_total_least_squares(x_array,y_array):
     M = np.dot(A.T,A)
 
     eigvals,eigvecs=np.linalg.eig(M)
-    print("eigvals: ",eigvals)
-    print("eigvecs: ",eigvecs)
+
     soln_idx=np.argmin(eigvals)
     soln_vec=eigvecs[:,soln_idx]
-    print("TLS params:",soln_vec)
+
 
     d = soln_vec[0] * x_mean + soln_vec[1] * y_mean
     # ax + by = d
     # y = (d - ax)/b
     y_pred = (d - soln_vec[0] * x_array)/soln_vec[1]
-    # y_pred=soln_vec[0] * x_array + soln_vec[1]
+
     points=np.vstack((x_array,y_pred)).T
-    # print("xshape:",x_array.shape)
-    # print("yshape:",y_pred.shape)
-    # print("points shape: ",points.shape)
 
     return points
 
 def RANSAC_points(x,parameters):
-    # print(len(parameters))
     y_pred=(-parameters[2] - parameters[0]*x)/parameters[1]
     return x,y_pred
 
@@ -106,7 +76,7 @@ def RANSAC_fit(x_array,y_array,p,e,s,thresh):
         x1,y1=x_array[rn1],y_array[rn1]
         x2,y2=x_array[rn2],y_array[rn2]
 
-        # standard form of line: px + qy + r
+        # standard form of line: px + qy + r = 0
         if(x1!=x2):
             p = (y2-y1)/(x1-x2)
         else:
@@ -122,16 +92,9 @@ def RANSAC_fit(x_array,y_array,p,e,s,thresh):
         
     return best_parameters
 
-
-def main():
-    data=pd.read_csv('/home/nitesh/programming/ENPM673/HW1/src/data.csv')
-
-    age=data['age']
-    charges=data['charges']
-    age=age.to_numpy(dtype=int)
-    charges=charges.to_numpy(dtype=float)
-    plt.scatter(age,charges)
-    
+def get_eigen_vectors(age,charges):
+    age=age/np.max(age)
+    charges=charges/np.max(charges)
     age_mean=np.mean(age)
     charges_mean=np.mean(charges)
     
@@ -146,28 +109,55 @@ def main():
     # print("charges_var:",charges_var)
 
     cov_mtx=np.array([[age_var,cov1],[cov2,charges_var]])
+    print(cov_mtx)
     eigvals,eigvecs=np.linalg.eig(cov_mtx)
+    print(eigvecs)
+    return eigvals,eigvecs
     
-    origin = np.array([[age_mean,age_mean],[charges_mean,charges_mean]])
-    plt.quiver(*origin, eigvecs[:,0], eigvecs[:,1], color=['r','b'], scale=10)
-    points=fit_linear_least_squares(age,charges)
-    # plt.show()
-    # print("y shape before:",y.shape)
-    plt.plot(points[:,0],points[:,1],'r',label="standard least squares")
 
+def main():
+    data=pd.read_csv('./data.csv')
+
+    age=data['age']
+    charges=data['charges']
+    age=age.to_numpy(dtype=int)
+    charges=charges.to_numpy(dtype=float)
+    # age=age/np.max(age)
+    # charges=charges/np.max(charges)
+    
+    
+    eigvals,eigvecs = get_eigen_vectors(age,charges)
+    age_mean=np.mean(age)
+    charges_mean=np.mean(charges)
+
+    plt.scatter(age,charges)
+    print(eigvecs)
+    # origin = np.array([[age_mean,age_mean],[charges_mean,charges_mean]])
+    origin = np.array([age_mean,charges_mean])
+    e2=eigvecs[:,1]
+    e1=eigvecs[:,0]
+    plt.quiver(*origin, *e2, color='b', scale=10)
+    plt.quiver(*origin, *e1, color='r', scale=10)
+
+    # plt.show()
+    points=fit_linear_least_squares(age,charges)
+    
+    plt.plot(points[:,0],points[:,1],'r',label="standard least squares")
+    # plt.show()
     points_TLS=fit_total_least_squares(age,charges)
-    # print(points_TLS)
+    
     plt.plot(points_TLS[:,0],points_TLS[:,1],'g',label='total least squares')
+    # plt.show()
 
     # RANSAC parameters
     s=2 # line
     e=0.4
-    p=0.9999
+    p=0.99999
     thresh=10
     
     RANSAC_params=RANSAC_fit(age,charges,p,e,s,thresh)
     x_ransac,y_ransac=RANSAC_points(age,RANSAC_params)
-    plt.plot(x_ransac,y_ransac,'b',label='ransac')
+    plt.plot(x_ransac,y_ransac,'b',label='RANSAC')
     plt.legend()
     plt.show()
 
